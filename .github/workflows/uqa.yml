@@ -1,0 +1,108 @@
+name: UQA DuckDB packages
+
+on:
+  push:
+    branches: [main, "fix/**"]
+    tags: ["uqa-v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uqa-duckdb-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
+
+jobs:
+  verify:
+    name: Verify packages (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: uqa-duckdb-1.5.5
+          cache-bin: false
+      - name: Check unchanged upstream implementation
+        run: |
+          git fetch --depth=1 origin 88f673c5cdf09e287c010a910db53b97e523a9fa
+          git diff --exit-code 88f673c5cdf09e287c010a910db53b97e523a9fa -- ':(glob)crates/**/*.rs' crates/libduckdb-sys/duckdb.tar.gz
+      - name: Verify fork metadata and native source
+        run: python3 verification/archives.py
+      - name: Exercise ZIP download and extraction
+        env:
+          DUCKDB_DOWNLOAD_LIB: "1"
+        run: cargo run -p uqa-duckdb-verification --locked
+      - name: Exercise bundled DuckDB and Parquet
+        run: cargo run -p uqa-duckdb-verification --features bundled --locked
+      - name: Build both registry archives before publication
+        env:
+          DUCKDB_DOWNLOAD_LIB: "1"
+        run: |
+          cargo package -p uqa-libduckdb-sys -p uqa-duckdb --locked
+          python3 verification/archives.py --packages target/package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: duckdb-packages-${{ matrix.os }}
+          path: target/package/*.crate
+          if-no-files-found: error
+
+  publish:
+    name: Publish verified packages
+    needs: verify
+    if: github.repository == 'jaepil/duckdb-rs' && startsWith(github.ref, 'refs/tags/uqa-v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: duckdb-packages-ubuntu-24.04
+          path: target/package
+      - name: Confirm tag and archive identities
+        run: |
+          python3 verification/archives.py --packages target/package
+          python3 - <<'PY'
+          import os, tomllib
+          with open('Cargo.toml', 'rb') as f:
+              version = tomllib.load(f)['workspace']['package']['version']
+          assert os.environ['GITHUB_REF_NAME'] == f'uqa-v{version}'
+          PY
+      - name: Publish the two verified crates in dependency order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          test -n "$CARGO_REGISTRY_TOKEN"
+          cargo publish -p uqa-libduckdb-sys --locked --no-verify
+          cargo publish -p uqa-duckdb --locked --no-verify
+      - name: Verify a fresh registry consumer
+        env:
+          DUCKDB_DOWNLOAD_LIB: "1"
+        run: |
+          python3 verification/consumer.py "$RUNNER_TEMP/duckdb-consumer"
+          cargo run --manifest-path "$RUNNER_TEMP/duckdb-consumer/Cargo.toml"
