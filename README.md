@@ -1,6 +1,6 @@
 # UQA-maintained DuckDB bindings
 
-This fork publishes `uqa-duckdb` and `uqa-libduckdb-sys` for [UQA Engine #918](https://github.com/cognica-io/uqa-engine/issues/918). It preserves the wrapper, native bindings and bundled DuckDB 1.5.5 source from upstream commit `88f673c5cdf09e287c010a910db53b97e523a9fa`, under their original MIT license. The build dependency changes from yanked ZIP 6 to ZIP 9.0.3. The fork uses Rust 1.90, matching UQA's minimum; the upstream README's stable-line compiler promise does not apply to these separately named packages.
+This fork publishes `uqa-duckdb` and `uqa-libduckdb-sys` for [UQA Engine #918](https://github.com/cognica-io/uqa-engine/issues/918). It preserves the wrapper, native bindings and bundled DuckDB 1.5.5 source from upstream commit `88f673c5cdf09e287c010a910db53b97e523a9fa`, under their original MIT license. The build dependency changes from yanked ZIP 6 to ZIP 9.0.3; the build-time TLS lock uses rustls 0.23.46, matching UQA's security correction. The fork uses Rust 1.90, matching UQA's minimum; the upstream README's stable-line compiler promise does not apply to these separately named packages.
 
 Use the existing Rust import name through a Cargo alias:
 

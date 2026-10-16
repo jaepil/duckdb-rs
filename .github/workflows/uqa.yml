@@ -2,7 +2,6 @@ name: UQA DuckDB packages
 
 on:
   push:
-    branches: [main, "fix/**"]
     tags: ["uqa-v*"]
   pull_request:
     branches: [main]
