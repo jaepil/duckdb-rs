@@ -1,5 +1,5 @@
 [package]
-name = "libduckdb-sys"
+name = "uqa-libduckdb-sys"
 version = { workspace = true }
 authors = { workspace = true }
 license = { workspace = true }
@@ -15,7 +15,7 @@ build = "build.rs"
 # `#include "duckdb.hpp"` against the bundled headers.
 links = "duckdb"
 categories = ["external-ffi-bindings", "database"]
-description = "Native bindings to the libduckdb library, C API"
+description = "UQA-maintained native DuckDB bindings with a non-yanked build dependency"
 exclude = ["duckdb-sources"]
 edition = { workspace = true }
 rust-version = { workspace = true }
@@ -52,7 +52,7 @@ tar = { workspace = true }
 ureq = { version = "3", default-features = false, features = ["rustls"] }
 vcpkg = { workspace = true, optional = true }
 which = { version = "8", optional = true }
-zip = { version = "6", default-features = false, features = ["deflate"] }
+zip = { version = "9.0.3", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 arrow = { workspace = true, features = ["ffi"] }

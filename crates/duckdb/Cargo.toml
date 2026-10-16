@@ -1,5 +1,5 @@
 [package]
-name = "duckdb"
+name = "uqa-duckdb"
 version = { workspace = true }
 authors = { workspace = true }
 repository = { workspace = true }
@@ -9,7 +9,7 @@ readme = { workspace = true }
 keywords = { workspace = true }
 license = { workspace = true }
 categories = { workspace = true }
-description = "Ergonomic wrapper for DuckDB"
+description = "UQA-maintained DuckDB wrapper with a non-yanked build dependency"
 edition = { workspace = true }
 rust-version = { workspace = true }
 

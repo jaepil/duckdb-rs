@@ -1,3 +1,24 @@
+# UQA-maintained DuckDB bindings
+
+This fork publishes `uqa-duckdb` and `uqa-libduckdb-sys` for [UQA Engine #918](https://github.com/cognica-io/uqa-engine/issues/918). It preserves the wrapper, native bindings and bundled DuckDB 1.5.5 source from upstream commit `88f673c5cdf09e287c010a910db53b97e523a9fa`, under their original MIT license. The build dependency changes from yanked ZIP 6 to ZIP 9.0.3. The fork uses Rust 1.90, matching UQA's minimum; the upstream README's stable-line compiler promise does not apply to these separately named packages.
+
+Use the existing Rust import name through a Cargo alias:
+
+```toml
+[dependencies]
+duckdb = { package = "uqa-duckdb", version = "=1.10505.1", features = ["bundled", "parquet"] }
+```
+
+The fork has distinct Rust type identity. It retains `links = "duckdb"`, so Cargo cannot combine it with the official `libduckdb-sys` in one dependency graph. The optional loadable macros still use the official `duckdb-loadable-macros 1.10505.0`; this fork does not republish that package.
+
+Only tag-triggered CI publishes packages, after Linux and macOS validate both downloaded-library ZIP extraction and a fresh bundled build, query results, Arrow output, transaction rollback, persisted reopening and a Parquet roundtrip. CI verifies both package archives before either upload, then installs the registry packages in an independent consumer. No release job dispatch or local publication is required.
+
+The bundled source archive SHA-256 is `e11f1209cdbb2a99b2ea2d348de21bdfb01dc494b55d1271df94b09c52bf229c`. Native version encoding remains `1.10505.x` for DuckDB 1.5.5. Changes to the Rust/native implementation must be reviewed separately from this dependency repair.
+
+The original upstream documentation follows.
+
+---
+
 # duckdb-rs
 
 [![Latest Version](https://img.shields.io/crates/v/duckdb.svg)](https://crates.io/crates/duckdb)
